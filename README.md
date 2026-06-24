@@ -8,7 +8,7 @@
 
 | Category | Description |
 |---|---|
-| [Wargames](#wargames) | OverTheWire, PicoCTF, etc. |
+| [Practice](#Practice) | OverTheWire, PicoCTF, etc. |
 | [CTF Writeups](#ctf-writeups) | Competition writeups by event |
 | [Tools & Scripts](#tools--scripts) | One-off scripts built during challenges |
 | [Notes](#notes) | Concept references — JWT, web exploits, crypto, binary |
