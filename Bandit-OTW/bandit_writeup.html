@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bandit Wargame — Complete Writeup</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;600;700&display=swap');
+
+  :root {
+    --bg:        #0d1117;
+    --surface:   #161b22;
+    --border:    #21262d;
+    --green:     #39d353;
+    --green-dim: #1a4a2e;
+    --amber:     #f0a500;
+    --text:      #e6edf3;
+    --muted:     #7d8590;
+    --code-bg:   #0d1117;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+    padding: 2rem 1rem 6rem;
+  }
+
+  /* ── Hero ── */
+  .hero {
+    max-width: 780px;
+    margin: 0 auto 3.5rem;
+    padding: 3rem 0 2rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .hero-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.15em;
+    color: var(--green);
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+
+  .hero h1 {
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    margin-bottom: 1rem;
+  }
+
+  .hero h1 span {
+    color: var(--green);
+  }
+
+  .hero-sub {
+    color: var(--muted);
+    font-size: 0.95rem;
+    max-width: 540px;
+  }
+
+  /* ── Stats bar ── */
+  .stats {
+    max-width: 780px;
+    margin: 0 auto 3rem;
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .stat-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--green);
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-size: 0.75rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  /* ── Levels ── */
+  .levels {
+    max-width: 780px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .level {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: border-color 0.15s;
+  }
+
+  .level:hover {
+    border-color: var(--green-dim);
+  }
+
+  .level-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.85rem 1.25rem;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .level-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--green);
+    background: var(--green-dim);
+    padding: 0.2rem 0.55rem;
+    border-radius: 4px;
+    white-space: nowrap;
+    min-width: 68px;
+    text-align: center;
+  }
+
+  .level-title {
+    flex: 1;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+
+  .level-badge {
+    font-size: 0.7rem;
+    color: var(--amber);
+    font-family: 'JetBrains Mono', monospace;
+    opacity: 0.8;
+  }
+
+  .level-body {
+    padding: 0 1.25rem 1.1rem;
+    display: none;
+    flex-direction: column;
+    gap: 0.7rem;
+    border-top: 1px solid var(--border);
+    padding-top: 0.9rem;
+  }
+
+  .level.open .level-body {
+    display: flex;
+  }
+
+  .level-section-label {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    margin-bottom: 0.25rem;
+  }
+
+  pre, code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+  }
+
+  .cmd-block {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    color: #79c0ff;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+
+  .pass-block {
+    background: var(--code-bg);
+    border: 1px solid var(--green-dim);
+    border-radius: 6px;
+    padding: 0.6rem 1rem;
+    color: var(--green);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .pass-text { word-break: break-all; }
+
+  .copy-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    padding: 0.2rem 0.6rem;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color 0.15s, border-color 0.15s;
+  }
+
+  .copy-btn:hover { color: var(--text); border-color: var(--text); }
+  .copy-btn.copied { color: var(--green); border-color: var(--green); }
+
+  .note {
+    font-size: 0.82rem;
+    color: var(--muted);
+    font-style: italic;
+  }
+
+  .note a { color: var(--amber); text-decoration: none; }
+
+  /* ── Footer ── */
+  .footer {
+    max-width: 780px;
+    margin: 4rem auto 0;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .footer-msg {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--green);
+  }
+
+  .footer-sub {
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+</style>
+</head>
+<body>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-eyebrow">OverTheWire · Wargame</div>
+  <h1>Bandit <span>Complete</span><br>Writeup</h1>
+  <p class="hero-sub">All 33 levels solved — commands, passwords, and notes. Click any level to expand.</p>
+</div>
+
+<!-- Stats -->
+<div class="stats">
+  <div class="stat"><span class="stat-num">33</span><span class="stat-label">Levels</span></div>
+  <div class="stat"><span class="stat-num">33</span><span class="stat-label">Solved</span></div>
+  <div class="stat"><span class="stat-num">100%</span><span class="stat-label">Completion</span></div>
+</div>
+
+<!-- Levels -->
+<div class="levels" id="levels"></div>
+
+<!-- Footer -->
+<div class="footer">
+  <span class="footer-msg">$ echo "All levels cleared." </span>
+  <span class="footer-sub">OverTheWire Bandit · github.com/Sqv1nx</span>
+</div>
+
+<script>
+const levels = [
+  {
+    range: "0",
+    title: "Connect to the server",
+    cmd: `ssh bandit0@bandit.labs.overthewire.org -p 2220`,
+    pass: "bandit0",
+    note: ""
+  },
+  {
+    range: "0 → 1",
+    title: "Read the readme file",
+    cmd: `cat readme`,
+    pass: "ZjLjTmM6FvvyRnrb2rfNWOZOTa6ip5If",
+    note: ""
+  },
+  {
+    range: "1 → 2",
+    title: "Read a file named '-'",
+    cmd: `cat /home/bandit1/-`,
+    pass: "263JGJPfgU6LtdEvgfWU1XP5yac29mFx",
+    note: "Dash is interpreted as stdin — use full path or ./-"
+  },
+  {
+    range: "2 → 3",
+    title: "File with spaces in name",
+    cmd: `cat /home/bandit2/*`,
+    pass: "MNk8KNH3Usiio41PRUEoDFPqfxLPlSmx",
+    note: "Glob expands the spaces issue cleanly"
+  },
+  {
+    range: "3 → 4",
+    title: "Hidden file inside directory",
+    cmd: `cd inhere\nls -al\ncat ...Hiding-From-You`,
+    pass: "2WmrDFRmJIq3IPxneAaMGhap0pFhF3NJ",
+    note: ""
+  },
+  {
+    range: "4 → 5",
+    title: "Find the human-readable file",
+    cmd: `cd inhere\ncat ./*`,
+    pass: "4oQYVPkxZOOEOO5pTW81FB8j8lxXGUQw",
+    note: "Cat all files and spot the ASCII one, or iterate -file00 to -file09"
+  },
+  {
+    range: "5 → 6",
+    title: "File with specific size (1033 bytes)",
+    cmd: `cd inhere\nfind . -size 1033c\ncat ./maybehere07/.file2`,
+    pass: "HWasnPhtq9AVKe0dmk45nxy20cvUa6EG",
+    note: ""
+  },
+  {
+    range: "6 → 7",
+    title: "File owned by bandit7, group bandit6, 33 bytes",
+    cmd: `find / -type f -user bandit7 -group bandit6 -size 33c 2>/dev/null\ncat /var/lib/dpkg/info/bandit7.password`,
+    pass: "morbNTDkSW6jIlUc0ymOdMaLnOlFVAaj",
+    note: "2>/dev/null suppresses permission denied errors — or pipe to grep -v 'Permission'"
+  },
+  {
+    range: "7 → 8",
+    title: "Word 'millionth' in data.txt",
+    cmd: `grep "millionth" data.txt`,
+    pass: "dfwvzFQi4mU0wfNbFOe9RoWskMLg7eEc",
+    note: ""
+  },
+  {
+    range: "8 → 9",
+    title: "Only line that appears once",
+    cmd: `sort data.txt | uniq -u`,
+    pass: "4CKMh1JI91bUIZZPXDqGanal4xvAg0JM",
+    note: "uniq -u only works on sorted input"
+  },
+  {
+    range: "9 → 10",
+    title: "Human-readable strings preceded by '='",
+    cmd: `strings data.txt | grep "="`,
+    pass: "FGUW5ilLVJrxX9kMYMmlN4MgbpfMiqey",
+    note: ""
+  },
+  {
+    range: "10 → 11",
+    title: "Base64 encoded file",
+    cmd: `base64 -d data.txt`,
+    pass: "dtR173fZKb0RRsDFSGsg2RWnpNVj3qRr",
+    note: ""
+  },
+  {
+    range: "11 → 12",
+    title: "ROT13 encoded",
+    cmd: `tr 'A-Za-z' 'N-ZA-Mn-za-m' < data.txt`,
+    pass: "7x16WNeHIi5YkIhWsfFIqoognUTyj9Q4",
+    note: "tr handles ROT13 natively — no external tool needed",
+    help: true
+  },
+  {
+    range: "12 → 13",
+    title: "Hexdump — repeatedly decompress",
+    cmd: `# Reverse the hexdump, then decompress (gzip/bzip2/tar) repeatedly\n# until you reach plain text\nxxd -r data.txt > /tmp/out\nfile /tmp/out  # check type, then decompress accordingly`,
+    pass: "FO5dwFsc0cbaIiH0h8J2eUks2vdTDwAn",
+    note: "Use file on each output to identify the compression format",
+    help: true
+  },
+  {
+    range: "13 → 14",
+    title: "SSH private key login",
+    cmd: `scp -P 2220 bandit13@bandit.labs.overthewire.org:~/sshkey.private ~/\nssh -i sshkey.private bandit14@bandit.labs.overthewire.org -p 2220`,
+    pass: "MU4VWeTyJk8ROof1qqmcBPaLh7lDCPvS",
+    note: "Had laptop SSH issues — scp'd key locally first"
+  },
+  {
+    range: "14 → 15",
+    title: "Submit password to port 30000",
+    cmd: `nc localhost 30000\n# paste current password`,
+    pass: "8xCjnmgoKbGLhHFAZlGE5Tmu4M2tKJQo",
+    note: ""
+  },
+  {
+    range: "15 → 16",
+    title: "SSL encrypted connection",
+    cmd: `openssl s_client -connect localhost:30001\n# paste current password`,
+    pass: "kSkvUpMQ7lBYyCM4GBPvCvT1BfWRy0Dx",
+    note: ""
+  },
+  {
+    range: "16 → 17",
+    title: "Find open SSL port, submit password",
+    cmd: `nmap -sV -p 31000-32000 -T4 localhost\n# connect to the SSL port that speaks back\nopenssl s_client -connect localhost:<port>`,
+    pass: "SSH private key (save to file)",
+    note: "nmap identifies which ports are SSL — only one echoes back"
+  },
+  {
+    range: "17 → 18",
+    title: "Diff two password files",
+    cmd: `diff password.old password.new`,
+    pass: "x2gLTTjFwMOhQ8oWNbMN362QKxfRqGlO",
+    note: ""
+  },
+  {
+    range: "18 → 19",
+    title: "Logout trap — run command via SSH directly",
+    cmd: `ssh bandit.labs.overthewire.org -p 2220 -l bandit18 "cat ./readme"`,
+    pass: "cGWpMaKXVwDUNgPAVJbWYuGHVn9zl3j8",
+    note: "bashrc logs you out instantly — bypass by passing command to ssh directly"
+  },
+  {
+    range: "19 → 20",
+    title: "SUID binary to read next password",
+    cmd: `./bandit20-do cat /etc/bandit_pass/bandit20`,
+    pass: "0qXahG8ZjOVMN9Ghs7iOWsCfZyXOUbYO",
+    note: "The setuid binary runs as bandit20 — use it to cat the password file"
+  },
+  {
+    range: "20 → 21",
+    title: "Netcat listener + SUID binary",
+    cmd: `# Terminal 1 — listener\necho "0qXahG8ZjOVMN9Ghs7iOWsCfZyXOUbYO" | nc -l -p 1234\n# Terminal 2\n./suconnect 1234`,
+    pass: "EeoULMCra2q0dSkYj561DX7s1CpBuOBt",
+    note: "Two sessions needed — the binary connects back to your listener",
+    help: true
+  },
+  {
+    range: "21 → 22",
+    title: "Cron job leaking password to /tmp",
+    cmd: `ls /etc/cron.d/\ncat /etc/cron.d/cronjob_bandit22\ncat /usr/bin/cronjob_bandit22.sh\n# read the temp file the script writes to`,
+    pass: "tRae0UfB9v0UzbCdn9cY0gQnds9GF58Q",
+    note: ""
+  },
+  {
+    range: "22 → 23",
+    title: "Reverse-engineer the cron script",
+    cmd: `cat /usr/bin/cronjob_bandit23.sh\n# script writes password to /tmp/$(echo I am user bandit23 | md5sum | cut -d ' ' -f 1)\nmyname=bandit23\ncat /tmp/$(echo I am user $myname | md5sum | cut -d ' ' -f 1)`,
+    pass: "0Zf11ioIjMVN551jX3CmStKLYqjk54Ga",
+    note: ""
+  },
+  {
+    range: "23 → 24",
+    title: "Write script to cron-executed directory",
+    cmd: `mkdir /tmp/mydir\nchmod 777 /tmp/mydir\n# write script:\n#!/bin/bash\ncat /etc/bandit_pass/bandit24 > /tmp/mydir/password\n\nchmod +x /var/spool/bandit24/myscript.sh\n# wait ~60s, then:\ncat /tmp/mydir/password`,
+    pass: "gb8KRRCsshuZXI0tUuR6ypOFjiZbf3G8",
+    note: "Forgot permissions the first time — chmod 777 on output dir is essential",
+    help: true
+  },
+  {
+    range: "24 → 25",
+    title: "Brute-force 4-digit PIN",
+    cmd: `for pin in {0000..9999}; do\n    echo "gb8KRRCsshuZXI0tUuR6ypOFjiZbf3G8 $pin"\ndone | nc localhost 30002 | grep -v "Wrong"`,
+    pass: "iCi86ttT4KSNe1armKiwbQNmB3YJP3q4",
+    note: "Pipe entire wordlist at once — much faster than connecting per attempt"
+  },
+  {
+    range: "25 → 26",
+    title: "Shell is 'more' — escape via vim",
+    cmd: `# Make terminal very small so 'more' pauses\n# Press v to open vim\n:set shell=/bin/bash\n:shell`,
+    pass: "s0773xxkk0MXfdqOfPRVr9L3jJBUOgCZ",
+    note: "Creative level — shell is /usr/bin/more. Shrink terminal → trigger pager → vim escape",
+    help: true
+  },
+  {
+    range: "26 → 27",
+    title: "SUID binary for bandit27",
+    cmd: `./bandit27-do cat /etc/bandit_pass/bandit27`,
+    pass: "upsNCc7vzaRDx6oZC6GiR6ERwe1MowGB",
+    note: ""
+  },
+  {
+    range: "27 → 28",
+    title: "Clone git repo and read README",
+    cmd: `git clone ssh://bandit27-git@localhost:2220/home/bandit27-git/repo /tmp/repo27\ncat /tmp/repo27/README`,
+    pass: "Yz9IpL0sBcCeuG7m9uQFt8ZNpS4HZRcN",
+    note: ""
+  },
+  {
+    range: "28 → 29",
+    title: "Password hidden in git history",
+    cmd: `git log\ngit show <commit-hash>`,
+    pass: "4pT1t5DENaYuqnqvadYs1oE4QLCdjmJ7",
+    note: "README had password redacted — check earlier commits",
+    help: true
+  },
+  {
+    range: "29 → 30",
+    title: "Password on a different git branch",
+    cmd: `git branch -a\ngit checkout dev  # or whichever non-production branch exists\ncat README.md`,
+    pass: "qp30ex3VLz5MDG1n91YowTv4Q8l7CDZL",
+    note: "main/master said 'not in production' — check other branches"
+  },
+  {
+    range: "30 → 31",
+    title: "Password stored in a git tag",
+    cmd: `git tag\ngit show secret`,
+    pass: "fb5S2xb7bRyFmAvQYQGEqsbhVyJqhnDy",
+    note: "Tags aren't shown by default in most git UIs — easy to miss",
+    help: true
+  },
+  {
+    range: "31 → 32",
+    title: "Push a file ignoring .gitignore",
+    cmd: `echo "May I come in?" > key.txt\ngit add -f key.txt\ngit commit -m "add key"\ngit push`,
+    pass: "3O9RfhqyAlVBEZpVb6LYStshZoqoSx5K",
+    note: ".gitignore blocks *.txt — use git add -f to force"
+  },
+  {
+    range: "32 → 33",
+    title: "Uppercase shell — escape with $0",
+    cmd: `$0`,
+    pass: "tQdtbs5D5i2vJwkO8mEyYEyTL8izoeJ0",
+    note: "$0 refers to the shell itself — not uppercased by the wrapper"
+  },
+];
+
+function makeCopyBtn(text) {
+  const btn = document.createElement('button');
+  btn.className = 'copy-btn';
+  btn.textContent = 'copy';
+  btn.onclick = () => {
+    navigator.clipboard.writeText(text);
+    btn.textContent = 'copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('copied'); }, 1500);
+  };
+  return btn;
+}
+
+const container = document.getElementById('levels');
+
+levels.forEach((lvl, i) => {
+  const el = document.createElement('div');
+  el.className = 'level';
+
+  const header = document.createElement('div');
+  header.className = 'level-header';
+  header.innerHTML = `
+    <span class="level-num">Level ${lvl.range}</span>
+    <span class="level-title">${lvl.title}</span>
+    ${lvl.help ? '<span class="level-badge">help taken</span>' : ''}
+  `;
+  header.onclick = () => el.classList.toggle('open');
+
+  const body = document.createElement('div');
+  body.className = 'level-body';
+
+  // Commands
+  const cmdLabel = document.createElement('div');
+  cmdLabel.className = 'level-section-label';
+  cmdLabel.textContent = 'Commands';
+  body.appendChild(cmdLabel);
+
+  const cmdWrap = document.createElement('div');
+  cmdWrap.style.position = 'relative';
+  const cmdBlock = document.createElement('pre');
+  cmdBlock.className = 'cmd-block';
+  cmdBlock.textContent = lvl.cmd;
+  cmdWrap.appendChild(cmdBlock);
+  cmdWrap.appendChild(makeCopyBtn(lvl.cmd));
+  body.appendChild(cmdWrap);
+
+  // Password
+  const passLabel = document.createElement('div');
+  passLabel.className = 'level-section-label';
+  passLabel.textContent = 'Password';
+  body.appendChild(passLabel);
+
+  const passBlock = document.createElement('div');
+  passBlock.className = 'pass-block';
+  const passText = document.createElement('code');
+  passText.className = 'pass-text';
+  passText.textContent = lvl.pass;
+  passBlock.appendChild(passText);
+  passBlock.appendChild(makeCopyBtn(lvl.pass));
+  body.appendChild(passBlock);
+
+  // Note
+  if (lvl.note) {
+    const note = document.createElement('p');
+    note.className = 'note';
+    note.textContent = '💡 ' + lvl.note;
+    body.appendChild(note);
+  }
+
+  el.appendChild(header);
+  el.appendChild(body);
+  container.appendChild(el);
+});
+</script>
+</body>
+</html>
