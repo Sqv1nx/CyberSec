@@ -1,0 +1,65 @@
+Game-Natas
+User-Sqv1nx
+
+levl 0
+pass->natas0
+
+levl 0->1
+view page source
+pass->scfWG6qNEIdzqVyfRwEGXyNUfFZkZeQ7
+
+levl 1->2
+view page source using ctrl+U
+pass->vsDOxoXyq3wckCP1ZmTZ71ngIA606odB
+
+levl 2->3
+address/files/pixel.png
+go to address/files
+click on user.txt
+pass->K30JrSRHzjxq3paUQuwozY4MNvmNFyhI
+
+levl 3->4
+address/robots.txt
+address/s3cr3t/
+go to user.txt
+pass->JDrPnuZAKyl6MkiqQGFIddrqpvgOASth
+
+levl 4->5
+intercept in burp
+change referer to natas5
+pass->e4z2Noy3oqwPJUWzJH0dseN67Cn1sy2M
+
+levl 5->6
+intercept in burp
+make loggedin to 1
+pass->7mhjtShJAcld2NYbKHEadnhEwRn2P8VT
+
+levl 6->7
+read source code and got to /include path
+get secret then submit it
+pass->B1szg95UcTnrzwnF3i3TzYHlyYh8iBV0
+
+levl 7->8
+address/index.php?page=/etc/natas_webpass/natas8
+in source code hint to reach this page is given
+pass->ugXL95KQmUAJJj6bMezOlBNDyI9Imwkc
+
+levl 8->9
+read source code RE logic preety simple use online sites
+pass->UdxmI27dTaXmnd1rxKQTfws6jihTdcQ9
+
+levl 9->10
+input not filtered
+ls -al gave dictionary so knew search bar was wrong
+; (breaks ls) the cmd
+; cat etc/natas_webpass/natas10
+pass->EgjlkzB6E8LJyf2Obt4q7q4ewt5ZWSNv
+
+levl 10->11
+now to blocked ; and & 
+but . is valid so it grep all words then our cmd excurtes
+. cat etc/natas_webpass/natas11
+pass->VUMQDmuITOEHzhviLE5V0VG9cPMQkyxd
+
+levl 11->12
+pass->EAGkE8uzFTxeoTT2mMst9Xy7PX6guEng;
